@@ -85,13 +85,8 @@ function App() {
     return DEFAULT_REVIEWS;
   });
 
-  // 2. Gemini API 키 관련 상태
-  const [apiKey, setApiKey] = useState(() => {
-    return localStorage.getItem('meal_gemini_api_key') || '';
-  });
+  // 2. Gemini AI 설정 안내 모달 상태
   const [isApiSettingsOpen, setIsApiSettingsOpen] = useState(false);
-  const [tempApiKey, setTempApiKey] = useState('');
-  const [showApiKey, setShowApiKey] = useState(false);
 
   // 3. 개인 급식 취향 타입 카드 상태
   const [personalTaste, setPersonalTaste] = useState(() => {
@@ -154,7 +149,7 @@ function App() {
 
     setIsAiLoading(true);
     try {
-      const report = await generateAiMealReport(currentReviews, apiKey);
+      const report = await generateAiMealReport(currentReviews);
       setAiResult(report);
     } catch (e) {
       console.error("AI 리포트 갱신 중 실패:", e);
@@ -163,11 +158,11 @@ function App() {
     }
   };
 
-  // 마운트 시점 및 API 키 변경 시점 리포트 로드
+  // 마운트 시점 리포트 로드
   useEffect(() => {
     updateAiReport(reviews);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiKey]);
+  }, []);
 
   // 오늘 날짜 한글 포맷팅
   const todayFormatted = useMemo(() => {
@@ -235,7 +230,7 @@ function App() {
     // 1. 개인 취향 타입 카드 즉시 생성
     setIsTasteCardLoading(true);
     try {
-      const taste = await generatePersonalTasteCard(newReview, apiKey);
+      const taste = await generatePersonalTasteCard(newReview);
       setPersonalTaste(taste);
       localStorage.setItem('meal_personal_taste', JSON.stringify(taste));
     } catch (err) {
@@ -272,25 +267,9 @@ function App() {
     }
   };
 
-  // API 설정 모달 제어
+  // API 설정 안내 모달 제어
   const openSettings = () => {
-    setTempApiKey(apiKey);
-    setShowApiKey(false);
     setIsApiSettingsOpen(true);
-  };
-
-  const handleSaveApiKey = () => {
-    const trimmed = tempApiKey.trim();
-    setApiKey(trimmed);
-    localStorage.setItem('meal_gemini_api_key', trimmed);
-    setIsApiSettingsOpen(false);
-  };
-
-  const handleDeleteApiKey = () => {
-    setApiKey('');
-    setTempApiKey('');
-    localStorage.removeItem('meal_gemini_api_key');
-    setIsApiSettingsOpen(false);
   };
 
   // 텍스트 중 **강조** 표시를 <strong> 태그로 변환해서 렌더링하는 헬퍼 함수
@@ -921,70 +900,33 @@ function App() {
         )}
       </section>
 
-      {/* AI 설정 모달 */}
+      {/* AI 설정 안내 모달 */}
       {isApiSettingsOpen && (
         <div className="modal-overlay" onClick={() => setIsApiSettingsOpen(false)}>
           <div className="modal-content card" onClick={(e) => e.stopPropagation()}>
             <h3 className="card-title" style={{ fontSize: '1.1rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>
-              ⚙️ Gemini AI 설정
+              ⚙️ Gemini AI 연결
             </h3>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-body)', marginBottom: '1.25rem', lineHeight: 1.45 }}>
-              전체 여론 요약 및 개별 급식 MBTI 카드를 실시간 생성하기 위해 Google Gemini API Key를 설정합니다. API 키가 없으면 로컬 피드백 요약 모듈로 자동 전환됩니다.
+              이 사이트는 Vercel 서버에 저장된 환경변수로 Gemini AI를 자동 호출합니다. 방문자가 API 키를 입력하거나 볼 필요가 없습니다.
             </p>
 
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label htmlFor="modal-key-input" style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.4rem', display: 'block', color: 'var(--text-body)' }}>
-                Gemini API Key
-              </label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  type={showApiKey ? "text" : "password"}
-                  id="modal-key-input"
-                  className="form-control"
-                  placeholder="AIzaSy..."
-                  value={tempApiKey}
-                  onChange={(e) => setTempApiKey(e.target.value)}
-                  style={{ flexGrow: 1 }}
-                />
-                <button
-                  type="button"
-                  className="log-action-btn"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  style={{ minWidth: '60px', padding: '0.5rem 0.75rem' }}
-                >
-                  {showApiKey ? "숨기기" : "보기"}
-                </button>
+              <div style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '0.9rem', background: 'rgba(14, 165, 233, 0.06)' }}>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-body)', lineHeight: 1.5, margin: 0 }}>
+                  Vercel 프로젝트의 Environment Variables에 <strong>GEMINI_API_KEY</strong>가 설정되어 있으면 Gemini AI 리포트가 자동으로 생성됩니다. 설정 전에는 기본 로컬 분석으로 표시됩니다.
+                </p>
               </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem', display: 'block' }}>
-                🔒 *시연용 로컬 저장: 입력한 키는 사용자의 브라우저 내 브라우저 저장소(localStorage)에만 안전하게 보관됩니다.*
-              </span>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-              {apiKey && (
-                <button
-                  type="button"
-                  className="reset-data-btn"
-                  onClick={handleDeleteApiKey}
-                  style={{ color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.4)', marginRight: 'auto' }}
-                >
-                  키 삭제
-                </button>
-              )}
-              <button
-                type="button"
-                className="reset-data-btn"
-                onClick={() => setIsApiSettingsOpen(false)}
-              >
-                닫기
-              </button>
               <button
                 type="button"
                 className="submit-btn"
-                onClick={handleSaveApiKey}
+                onClick={() => setIsApiSettingsOpen(false)}
                 style={{ padding: '0.4rem 1.2rem', fontSize: '0.9rem' }}
               >
-                연결 및 저장
+                확인
               </button>
             </div>
           </div>

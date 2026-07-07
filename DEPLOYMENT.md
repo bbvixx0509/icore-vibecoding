@@ -23,6 +23,10 @@
 
 ## 주의할 점
 
-- Gemini API Key는 코드에 넣지 말고 앱 화면의 설정 모달에서 사용자 브라우저에만 저장하세요.
+- Gemini API Key는 코드에 넣지 말고 Vercel 프로젝트의 환경변수에 저장하세요.
+  - Name: `GEMINI_API_KEY`
+  - Value: 본인의 Google Gemini API Key
+  - Environments: Production, Preview, Development 모두 선택
+- 환경변수를 추가하거나 바꾼 뒤에는 Vercel에서 `Redeploy`를 눌러야 새 배포에 적용됩니다.
 - 지금 앱 데이터는 각 사용자의 브라우저에 따로 저장됩니다. 여러 사람이 같은 리뷰 데이터를 함께 보게 하려면 나중에 Firebase/Supabase 같은 외부 데이터베이스가 필요합니다.
 - 로컬 Windows의 한글/공백 경로에서는 Vite 8 빌드가 실패할 수 있습니다. 실제 배포 서버와 ASCII 경로 테스트에서는 빌드가 정상 통과했습니다.
